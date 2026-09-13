@@ -37,6 +37,14 @@ app.use('/admin',view_router_admin)
 
 app.use('/admin',view_router_item)
 
+// SPA fallback for frontend client routing
+app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/cus') || req.path.startsWith('/admin')) {
+        return next();
+    }
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 if (require.main === module && !process.env.VERCEL) {
     http_server.listen(port, () => {
         console.log(`server started and listening at port:${port}`);

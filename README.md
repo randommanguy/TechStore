@@ -46,8 +46,10 @@ A production-oriented full-stack e-commerce web application featuring a layered 
 ## Tech Stack
 
 ### Frontend
-- **HTML5 & Modern CSS3** (Flexbox, CSS Grid, Custom CSS Variables, Responsive Layouts)
-- **Vanilla JavaScript** (State management, API integration, LocalStorage caching)
+- **React 18 & Vite** (Component-based architecture, Fast HMR, Production bundling)
+- **Modern CSS3** (Flexbox, CSS Grid, Custom CSS Variables, Responsive Layouts)
+- **Context API** (State management for Auth, Cart, Products, and Toast notifications)
+- **LocalStorage & API Sync** (Client-side persistence with optional backend synchronization)
 
 ### Backend
 - **Node.js** & **Express.js** (REST API & static asset hosting)
@@ -89,6 +91,16 @@ PostgreSQL Database (Knex Query Builder)
 
 ```text
 e-commerce-2/
+├── client/                   # React frontend application (Vite)
+│   ├── src/
+│   │   ├── components/       # UI components (Navbar, Cart, Catalog, Modals, Admin)
+│   │   ├── context/          # State providers (Auth, Cart, Products, Toast)
+│   │   ├── constants/        # Default seed products and categories
+│   │   ├── App.jsx           # Main React component
+│   │   ├── main.jsx          # React DOM entrypoint
+│   │   └── index.css         # Component and global styles
+│   ├── vite.config.js        # Vite config with Express proxy & outputDir
+│   └── package.json          # Frontend dependencies and scripts
 ├── control/                  # Application controllers (business logic)
 │   ├── controller_admin.js   # Admin operations & inventory logic
 │   ├── controller_cus.js     # Customer auth, cart, and checkout logic
@@ -101,10 +113,8 @@ e-commerce-2/
 │   ├── router_admin.js       # Admin endpoints
 │   ├── router_cus.js         # Customer endpoints
 │   └── router_items.js       # Product and category endpoints
-├── public/                   # Frontend assets
-│   ├── index.html            # Storefront & portal markup
-│   ├── style.css             # Responsive styling & design system
-│   └── app.js                # Client application logic & state
+├── public/                   # Compiled frontend distribution (served by Express)
+├── public_legacy/            # Archived original vanilla HTML/CSS/JS files
 ├── middlewares/              # Express middlewares (e.g., upload handling)
 ├── token/                    # JWT token generation & verification
 ├── jobs/                     # Background cron jobs (cart cleanup)
@@ -119,7 +129,7 @@ e-commerce-2/
 
 ## Frontend Application
 
-The frontend is served directly by the Express server (`http://localhost:3000`):
+The React frontend is built using Vite and served directly by the Express server (`http://localhost:3000`):
 
 - **Storefront**: Responsive grid view with search and category filters.
 - **Cart System**: Slide-out cart modal with live tax (8%), shipping calculation, and quantity controls.
@@ -127,6 +137,10 @@ The frontend is served directly by the Express server (`http://localhost:3000`):
   - **Customer**: `alex@techstore.com` (Password: `Password123!`)
   - **Administrator**: `admin@techstore.com` (Password: `AdminPassword123!`)
 - **Admin Portal**: Accessible from the top navigation bar for managing products and viewing stats.
+- **Development Workflow**:
+  - `npm run client:dev`: Launches the Vite development server at `http://localhost:5173` with automatic API proxying.
+  - `npm run build`: Compiles the React application into `public/`.
+  - `npm start`: Starts the Express server which hosts both the API and the compiled React SPA at `http://localhost:3000`.
 
 ---
 
