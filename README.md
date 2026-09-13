@@ -56,7 +56,7 @@ A production-oriented full-stack e-commerce web application featuring a layered 
 - **Knex.js** (Query Builder & migration manager)
 - **PostgreSQL** (AWS RDS / relational data store)
 - **JWT (`jsonwebtoken`)** (Dual token authentication: access & refresh)
-- **bcrypt** (Password hashing and verification)
+- **bcryptjs** (Password hashing and verification)
 - **Multer** & **Multer-S3** (@aws-sdk/client-s3 for cloud file storage)
 - **node-cron** (Scheduled background tasks)
 

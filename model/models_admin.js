@@ -3,7 +3,7 @@ const knex = require("knex")(knexConfig);
 const re_cus = require('../resvo/resvo_cus');
 const tk=require('../token/token_cus')
 const jwt=require('jsonwebtoken')
-const enc=require('bcrypt')
+const enc=require('bcryptjs')
 const {del_img}=require('../middlewares/upload')
 
 class models_admin{

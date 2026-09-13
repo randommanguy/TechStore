@@ -1,10 +1,9 @@
 const knexConfig = require("../knexfile");
 const knex = require("knex")(knexConfig);
 const re_cus = require('../resvo/resvo_cus');
-const b=require('bcrypt')
 const tk=require('../token/token_cus')
 const jwt=require('jsonwebtoken')
-const enc=require('bcrypt')
+const enc=require('bcryptjs')
 
 class models_cus{
 static async model_signup_cus(n,em,p,ma,sa,d){

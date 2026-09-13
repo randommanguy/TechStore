@@ -1,7 +1,7 @@
 require('dotenv').config();
 const model = require('../model/models_cus');
 const re_cus = require('../resvo/resvo_cus');
-const enc=require('bcrypt');
+const enc=require('bcryptjs');
 const tk=require('../token/token_cus')
 const exp = require('express');
 const jwt=require('jsonwebtoken')

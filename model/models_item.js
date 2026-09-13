@@ -3,7 +3,7 @@ const knex = require("knex")(knexConfig);
 const re_cus = require('../resvo/resvo_cus');
 const tk=require('../token/token_cus')
 const jwt=require('jsonwebtoken')
-const enc=require('bcrypt')
+const enc=require('bcryptjs')
 
 class models_item{
 static async models_get_all_categories(req,res){

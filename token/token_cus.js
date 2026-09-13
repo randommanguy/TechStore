@@ -1,6 +1,6 @@
 require('dotenv').config()
 const jwt=require('jsonwebtoken')
-const enc=require('bcrypt')
+const enc=require('bcryptjs')
 const resp_cus=require('../resvo/resvo_cus')
 class token{
 static async atok_gen(i,n,e,src='users'){
