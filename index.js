@@ -4,7 +4,9 @@ const view_router_cus=require('./view/router_cus')
 const view_router_item=require('./view/router_items')
 const view_router_admin=require('./view/router_admin')
 const http=require('http')
-require('./jobs/cart_cleanup')
+if (require.main === module && !process.env.VERCEL) {
+    require('./jobs/cart_cleanup')
+}
 const cors = require('cors')
 const path = require('path')
 
@@ -35,7 +37,12 @@ app.use('/admin',view_router_admin)
 
 app.use('/admin',view_router_item)
 
-http_server.listen(port,()=>{
-    console.log(`server started and listening at port:${port}`)
-});
+if (require.main === module && !process.env.VERCEL) {
+    http_server.listen(port, () => {
+        console.log(`server started and listening at port:${port}`);
+    });
+}
+
+module.exports = app;
+
 
