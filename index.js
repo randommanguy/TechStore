@@ -6,14 +6,17 @@ const view_router_admin=require('./view/router_admin')
 const http=require('http')
 require('./jobs/cart_cleanup')
 const cors = require('cors')
+const path = require('path')
 
 const app = exp();
 const http_server=http.createServer(app)
-const port =process.env.Port
+const port = process.env.Port || 3000
 
 app.use(cors())
-
 app.use(exp.json());
+
+// Serve static frontend files
+app.use(exp.static(path.join(__dirname, 'public')));
 
 app.use((req,res,next)=>{
     res.setHeader('Access-Control-Allow-Origin','*');
