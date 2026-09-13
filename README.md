@@ -1,647 +1,256 @@
-# E-Commerce Backend API
+# TechStore &bull; Full-Stack E-Commerce Platform
 
-## Overview
-
-This project is a production-oriented e-commerce backend built using Node.js, Express.js, PostgreSQL, and Knex.js. It follows a layered architecture that separates routing, business logic, and database operations, enabling maintainability, scalability, and clean code practices. The application exposes RESTful APIs designed to support modern e-commerce workflows and future feature expansion.
-
-The platform provides dedicated customer and administrator modules secured through JWT-based authentication and role-based access control. Customers can browse products, manage carts, and place orders, while administrators can manage categories, subcategories, products, inventory, and platform data. Secure password hashing and transactional operations help maintain application security and data integrity.
-
-To support cloud-native deployments, product images are stored in AWS S3 using Multer-S3 integration and application is ran in an ec2 instance, eliminating dependence on local storage. PostgreSQL transactions ensure consistency during inventory and checkout operations, while cron-based background jobs automate abandoned cart cleanup and inventory restoration. The system is designed with reliability, performance, and scalability as core architectural priorities.
+A production-oriented full-stack e-commerce web application featuring a layered Node.js / Express backend with PostgreSQL & Knex.js, AWS S3 asset storage, and a responsive frontend with customer authentication, administrator management, dynamic product filtering, and shopping cart functionality.
 
 ---
 
-# Key Highlights
+## Table of Contents
 
-* JWT Authentication with Refresh Tokens
-* Role-Based Access (Admin/User)
-* PostgreSQL + Knex Query Builder
-* AWS S3 Product Image Storage
-* Transaction-Based Database Operations
-* Cart & Checkout System
-* Automated Cart Cleanup Job
-* Modular MVC Architecture
-* Production Deployment Ready
-* Scalable Cloud-Native Design
+- [Features Overview](#features-overview)
+- [Tech Stack](#tech-stack)
+- [Project Architecture](#project-architecture)
+- [Folder Structure](#folder-structure)
+- [Frontend Application](#frontend-application)
+- [API Reference](#api-reference)
+  - [Customer Routes](#customer-routes)
+  - [Product & Category Routes](#product--category-routes)
+  - [Administrator Routes](#administrator-routes)
+- [Database & Transactions](#database--transactions)
+- [Background Jobs](#background-jobs)
+- [Environment Variables](#environment-variables)
+- [Getting Started](#getting-started)
 
-# Tech Stack
+---
+
+## Features Overview
+
+### Storefront & Customer Experience
+- **Interactive Product Catalog**: Browse products with search, category filtering (`Electronics`, `Audio`, `Wearables`, `Accessories`), stock counters, and product descriptions.
+- **Cart Management**: Add items with selectable quantities, adjust cart amounts, view real-time subtotal/tax calculations, and remove items.
+- **Customer Authentication**: Account registration and JWT-based authentication (access tokens & refresh tokens) with secure bcrypt password hashing.
+- **Preview Checkout Notice**: Modal notifications explaining preview-mode checkout status while retaining cart state.
+
+### Administrator Management Portal
+- **Admin Dashboard**: Real-time stats overview for catalog size, active categories, and total inventory stock.
+- **Inventory Controls**: Adjust inventory levels on the fly (`+5` / `-5`), remove products, or add new catalog items with image presets.
+- **Category & Subcategory Hierarchy**: Endpoints for creating, renaming, and deleting categories and subcategories with automatic slug generation.
+- **Product Management**: Support for multi-image uploads using AWS S3 storage with transactional inventory tracking.
+
+### System & Architecture
+- **Layered MVC Pattern**: Clean separation among routes, controllers, and models.
+- **Database Transactions**: Atomicity and data consistency across order, cart, and inventory modifications.
+- **Automated Inventory Recovery**: Hourly `node-cron` job restores stock from abandoned carts.
+
+---
+
+## Tech Stack
+
+### Frontend
+- **HTML5 & Modern CSS3** (Flexbox, CSS Grid, Custom CSS Variables, Responsive Layouts)
+- **Vanilla JavaScript** (State management, API integration, LocalStorage caching)
 
 ### Backend
-
-* Node.js
-* Express.js
-
-### Database
-
-* PostgreSQL (AWS RDS)
-* Knex.js Query Builder
-
-### Authentication
-
-* JWT Access Tokens
-* JWT Refresh Tokens
-* bcrypt Password Hashing
-
-### File Storage
-
-* AWS S3
-* Multer
-* Multer-S3
-
-### Background Jobs
-
-* node-cron
-
-### Deployment Ready
-
-* AWS EC2
-* AWS RDS
-* AWS S3
+- **Node.js** & **Express.js** (REST API & static asset hosting)
+- **Knex.js** (Query Builder & migration manager)
+- **PostgreSQL** (AWS RDS / relational data store)
+- **JWT (`jsonwebtoken`)** (Dual token authentication: access & refresh)
+- **bcrypt** (Password hashing and verification)
+- **Multer** & **Multer-S3** (@aws-sdk/client-s3 for cloud file storage)
+- **node-cron** (Scheduled background tasks)
 
 ---
 
-# Project Architecture
+## Project Architecture
 
-The project follows a layered architecture:
+The backend follows a layered architectural pattern:
 
 ```text
-Routes
-   ↓
-Controllers
-   ↓
-Models
-   ↓
-PostgreSQL Database
+HTTP Request
+     │
+     ▼
+Routes (view/)
+     │
+     ▼
+Middlewares & Auth (middlewares/, token/)
+     │
+     ▼
+Controllers (control/)
+     │
+     ▼
+Models (model/)
+     │
+     ▼
+PostgreSQL Database (Knex Query Builder)
 ```
 
-### Folder Structure
+---
+
+## Folder Structure
 
 ```text
 e-commerce-2/
-
-├── control/
-│   ├── controller_admin.js
-│   ├── controller_cus.js
-│   └── controller_item.js
-│
-├── model/
-│   ├── models_admin.js
-│   ├── models_cus.js
-│   └── models_item.js
-│
-├── view/
-│   ├── router_admin.js
-│   ├── router_cus.js
-│   └── router_items.js
-│
-├── middlewares/
-│   └── upload.js
-│
-├── token/
-│   └── token_cus.js
-│
-├── jobs/
-│   └── cart_cleanup.js
-│
-├── mig/
-│   └── database migrations
-│
-├── images/
-│
-├── knexfile.js
-├── index.js
-└── .env
+├── control/                  # Application controllers (business logic)
+│   ├── controller_admin.js   # Admin operations & inventory logic
+│   ├── controller_cus.js     # Customer auth, cart, and checkout logic
+│   └── controller_item.js    # Catalog, category, and product queries
+├── model/                    # Data access layer & Knex models
+│   ├── models_admin.js       # Admin queries & transaction logic
+│   ├── models_cus.js         # Customer data, cart, & checkout queries
+│   └── models_item.js        # Category & product queries
+├── view/                     # Express route definitions
+│   ├── router_admin.js       # Admin endpoints
+│   ├── router_cus.js         # Customer endpoints
+│   └── router_items.js       # Product and category endpoints
+├── public/                   # Frontend assets
+│   ├── index.html            # Storefront & portal markup
+│   ├── style.css             # Responsive styling & design system
+│   └── app.js                # Client application logic & state
+├── middlewares/              # Express middlewares (e.g., upload handling)
+├── token/                    # JWT token generation & verification
+├── jobs/                     # Background cron jobs (cart cleanup)
+├── mig/                      # Knex database migrations
+├── knexfile.js               # Knex database configuration
+├── index.js                  # Express server entry point
+├── valid.js                  # Request validation utilities
+└── .env                      # Environment configuration
 ```
 
 ---
 
-# Core Features
+## Frontend Application
 
-## Customer Module
+The frontend is served directly by the Express server (`http://localhost:3000`):
 
-### Customer Registration
-
-Allows users to create accounts with:
-
-* Name
-* Email
-* Password
-* Main Address
-* Secondary Address
-* Date of Birth
-
-Passwords are securely hashed using bcrypt before being stored.
+- **Storefront**: Responsive grid view with search and category filters.
+- **Cart System**: Slide-out cart modal with live tax (8%), shipping calculation, and quantity controls.
+- **Quick-Fill Testing Accounts**:
+  - **Customer**: `alex@techstore.com` (Password: `Password123!`)
+  - **Administrator**: `admin@techstore.com` (Password: `AdminPassword123!`)
+- **Admin Portal**: Accessible from the top navigation bar for managing products and viewing stats.
 
 ---
 
-### Customer Login
+## API Reference
 
-Customers can log in using:
+### Customer Routes
 
-* Name
-* Email
-* Password
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `POST` | `/cus/signup` | Register new customer account | No |
+| `POST` | `/cus/login` | Authenticate customer and receive JWT | No |
+| `POST` | `/cus/refresh` | Renew access token via refresh token | No |
+| `POST` | `/cus/cart/add` | Add product to active cart & reserve stock | Bearer (User) |
+| `DELETE` | `/cus/cart/del` | Remove product from active cart | Bearer (User) |
+| `POST` | `/cus/cart/check_out` | Convert cart into an order | Bearer (User) |
 
-Successful login generates:
+### Product & Category Routes
 
-* Access Token (30 minutes)
-* Refresh Token (7 days)
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `GET` | `/cus/categories/get_all` | Retrieve list of all categories | Bearer |
+| `GET` | `/cus/categories/all_sub/:id` | Get subcategories for a category ID | Bearer |
+| `GET` | `/cus/categories/:cid/sub/:sid/products` | Retrieve products under subcategory | Bearer |
 
----
+### Administrator Routes
 
-### Shopping Cart Management
-
-Customers can:
-
-* Add products to cart
-* Remove products from cart
-* Checkout cart
-
-When a product is added:
-
-* Product stock is reduced immediately
-* Cart is automatically created if one does not exist
-
----
-
-### Checkout System
-
-During checkout:
-
-* Cart is converted into an order
-* GST is calculated
-* Shipping charges are calculated
-* Final payable amount is generated
-* Order record is stored
-
-Generated checkout response contains:
-
-* Order ID
-* Shipping Address
-* Product List
-* Product Cost
-* GST Amount
-* Shipping Cost
-* Final Cost
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `POST` | `/admin/signup` | Register new admin account (requires `employee_id`) | No |
+| `POST` | `/admin/login` | Authenticate admin account and receive JWT | No |
+| `POST` | `/admin/refresh` | Refresh admin access token | No |
+| `POST` | `/admin/add_categories` | Create new categories with auto-slugs | Bearer (Admin) |
+| `PUT` | `/admin/update_categories` | Rename existing categories | Bearer (Admin) |
+| `DELETE` | `/admin/delete_categories` | Bulk delete categories | Bearer (Admin) |
+| `POST` | `/admin/categories/add_subs` | Add subcategories under a category | Bearer (Admin) |
+| `PUT` | `/admin/categories/upd_subs` | Update subcategory details | Bearer (Admin) |
+| `DELETE` | `/admin/categories/del_subs` | Delete subcategories | Bearer (Admin) |
+| `POST` | `/admin/categories/:cid/sub/:sid/add` | Add new product with image uploads | Bearer (Admin) |
+| `PUT` | `/admin/categories/:cid/sub/:sid/upd` | Update existing product details | Bearer (Admin) |
+| `DELETE` | `/admin/categories/:cid/sub/:sid/del` | Remove product from inventory | Bearer (Admin) |
 
 ---
 
-# Admin Module
+## Database & Transactions
 
-## Admin Registration
+The database architecture uses PostgreSQL managed through Knex.js:
 
-Administrators can register using:
+- **Customers** (`ecom2_cus_tb`): User records, profile addresses, and hashed passwords.
+- **Admins** (`admin_tb`): Administrator records, employee IDs, and audit timestamps.
+- **Categories & Subcategories** (`categories`, `subcategories_tb`): Hierarchical catalog taxonomy with unique slugs.
+- **Products** (`product_tb`): Product titles, descriptions, pricing, stock levels, and S3 image URLs.
+- **Carts & Items** (`cart_tb`, `cart_items_tb`): Active, abandoned, and converted customer shopping carts.
+- **Orders** (`orders_tb`): Finalized checkout records with GST, shipping, and receipt breakdown.
 
-* Name
-* Email
-* Password
-* Employee ID
-
-Credentials are encrypted before storage.
-
----
-
-## Admin Login
-
-Admins receive:
-
-* Access Token
-* Refresh Token
-
-Admin routes are protected using JWT authentication.
+Critical operations use Knex transactions (`knex.transaction()`) to guarantee atomicity and rollback capability on error.
 
 ---
 
-## Category Management
+## Background Jobs
 
-Admins can:
-
-### Create Categories
-
-Example:
-
-```text
-Electronics
-Fashion
-Books
-Sports
-```
-
-Features:
-
-* Automatic slug generation
-* Duplicate prevention
-* Transaction-based inserts
+A scheduled job in `jobs/cart_cleanup.js` runs automatically via `node-cron`:
+- Periodically checks for active carts inactive for longer than 2 hours.
+- Restores reserved product quantities back into inventory stock.
+- Updates cart status to `abandoned` to prevent stock lockup.
 
 ---
 
-### Update Categories
+## Environment Variables
 
-Admins can rename existing categories.
-
-Slug values are automatically updated.
-
----
-
-### Delete Categories
-
-Multiple categories can be deleted in a single request.
-
----
-
-## Subcategory Management
-
-Admins can:
-
-### Add Subcategories
-
-Examples:
-
-```text
-Mobiles
-Laptops
-Shoes
-Watches
-```
-
-Each subcategory belongs to a category.
-
----
-
-### Update Subcategories
-
-Rename existing subcategories.
-
----
-
-### Delete Subcategories
-
-Bulk deletion supported.
-
----
-
-## Product Management
-
-Admins can:
-
-### Create Products
-
-Product information includes:
-
-* Name
-* Description
-* Brand
-* Price
-* Stock
-* Category
-* Subcategory
-* Product Images
-
----
-
-### Product Image Uploads
-
-Images are uploaded directly to AWS S3.
-
-Stored using:
-
-```text
-Multer
-Multer-S3
-AWS SDK v3
-```
-
-Benefits:
-
-* No local storage dependency
-* Cloud-hosted images
-* Scalable image management
-
----
-
-### Update Products
-
-Modify:
-
-* Product details
-* Stock
-* Price
-* Brand
-* Description
-
----
-
-### Delete Products
-
-Products can be removed from inventory.
-
----
-
-# Product Browsing APIs
-
-Authenticated users can:
-
-### View All Categories
-
-Returns complete category list.
-
-### View Subcategories
-
-Returns subcategories under a selected category.
-
----
-
-# Authentication System
-
-Implemented using JWT.
-
-## Access Token
-
-Used for:
-
-```text
-Protected API Access
-```
-
-Expiration:
-
-```text
-30 Minutes
-```
-
----
-
-## Refresh Token
-
-Used for:
-
-```text
-Generating New Access Tokens
-```
-
-Expiration:
-
-```text
-7 Days
-```
-
----
-
-## Protected Routes
-
-Authentication middleware validates:
-
-```http
-Authorization: Bearer <token>
-```
-
-Admin and customer tokens use separate secret keys.
-
----
-
-# Database Design
-
-Main tables:
-
-### Customers
-
-```text
-ecom2_cus_tb
-```
-
-Stores:
-
-* Customer Details
-* Addresses
-* Credentials
-
----
-
-### Admins
-
-```text
-admin_tb
-```
-
-Stores:
-
-* Admin Details
-* Employee IDs
-* Login Activity
-
----
-
-### Categories
-
-```text
-categories
-```
-
-Stores:
-
-* Category Name
-* Slug
-
----
-
-### Subcategories
-
-```text
-subcategories_tb
-```
-
-Stores:
-
-* Category Relationship
-* Slug
-
----
-
-### Products
-
-```text
-product_tb
-```
-
-Stores:
-
-* Product Information
-* Pricing
-* Stock
-* Images
-
----
-
-### Cart
-
-```text
-cart_tb
-```
-
-Stores:
-
-* Customer Cart
-* Cart Status
-
-Statuses:
-
-```text
-active
-converted_to_order
-abandoned
-```
-
----
-
-### Cart Items
-
-```text
-cart_items_tb
-```
-
-Stores:
-
-* Product References
-* Quantity
-* Price Snapshot
-
----
-
-### Orders
-
-```text
-orders_tb
-```
-
-Stores:
-
-* Order Details
-* Final Amount
-
----
-
-# Transaction Management
-
-Critical operations use PostgreSQL transactions:
-
-* Product Creation
-* Category Operations
-* Subcategory Operations
-* Cart Operations
-* Checkout Operations
-
-Benefits:
-
-* Atomicity
-* Data Consistency
-* Rollback Support
-
----
-
-# Background Jobs
-
-## Cart Cleanup Job
-
-Implemented using:
-
-```text
-node-cron
-```
-
-Runs every hour.
-
-Responsibilities:
-
-* Detect abandoned carts
-* Restore reserved stock
-* Mark carts as abandoned
-
-This prevents inventory from being locked indefinitely.
-
----
-
-# Environment Variables
-
-Required:
+Create a `.env` file in the project root with the following parameters:
 
 ```env
-Port=
+# Server Port
+Port=3000
 
-aws_rds_host=
-aws_rds_user=
-aws_rds_prd=
-aws_rds_db=
+# Database Configuration (PostgreSQL / AWS RDS)
+aws_rds_host=your-db-host.rds.amazonaws.com
+aws_rds_user=postgres
+aws_rds_prd=your_db_password
+aws_rds_db=your_database_name
 
-access_sec_k=
-refresh_sec_k=
+# Customer JWT Secrets
+access_sec_k=your_customer_access_secret
+refresh_sec_k=your_customer_refresh_secret
 
-admin_access_sec_k=
-admin_refresh_sec_k=
+# Admin JWT Secrets
+admin_access_sec_k=your_admin_access_secret
+admin_refresh_sec_k=your_admin_refresh_secret
 
-AWS_REGION=
-AWS_ACCESS_KEY=
-AWS_SECRET_KEY=
-AWS_BUCKET_NAME=
+# AWS S3 Storage (Product Images)
+AWS_REGION=ap-south-1
+AWS_ACCESS_KEY=your_aws_access_key
+AWS_SECRET_KEY=your_aws_secret_key
+AWS_BUCKET_NAME=your_s3_bucket_name
 ```
 
 ---
 
-# API Route Summary
+## Getting Started
 
-## Customer Routes
-
-```http
-POST   /cus/signup
-POST   /cus/login
-POST   /cus/refresh
-
-POST   /cus/cart/add
-DELETE /cus/cart/del
-POST   /cus/cart/check_out
+### 1. Install Dependencies
+```bash
+npm install
 ```
 
----
+### 2. Configure Environment
+Ensure your `.env` file is properly configured with your PostgreSQL credentials and JWT secret keys.
 
-## Product Routes
-
-```http
-GET /cus/categories/get_all
-GET /cus/categories/all_sub/:id
+### 3. Run Migrations (Optional)
+```bash
+npx knex migrate:latest
 ```
 
----
-
-## Admin Routes
-
-```http
-POST /admin/signup
-POST /admin/login
-POST /admin/refresh
+### 4. Start the Application
+```bash
+npm start
+```
+Or with auto-reloading:
+```bash
+npm run dev
 ```
 
-### Categories
-
-```http
-POST   /admin/add_categories
-DELETE /admin/delete_categories
-PUT    /admin/update_categories
+### 5. Access the Web Application
+Open your browser and navigate to:
 ```
-
-### Subcategories
-
-```http
-POST   /admin/categories/add_subs
-DELETE /admin/categories/del_subs
-PUT    /admin/categories/upd_subs
+http://localhost:3000
 ```
-
-### Products
-
-```http
-POST   /admin/categories/:cid/sub/:sid/add
-DELETE /admin/categories/:cid/sub/:sid/del
-PUT    /admin/categories/:cid/sub/:sid/upd
-```
-
----
-
-
